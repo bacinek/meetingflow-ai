@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { FollowUpDraft } from "@/components/FollowUpDraft";
 import { ReviewForm } from "@/components/ReviewForm";
@@ -67,6 +67,8 @@ export function MeetingWorkflow() {
     null,
   );
   const [transferComplete, setTransferComplete] = useState(false);
+  const [transcriptExpanded, setTranscriptExpanded] = useState(true);
+  const [reviewFocusToken, setReviewFocusToken] = useState(0);
 
   const analysisComplete = review !== null;
   const currentStep = analyzing
@@ -82,11 +84,26 @@ export function MeetingWorkflow() {
     if (!targetId) {
       return;
     }
-    document.getElementById(targetId)?.scrollIntoView({
+    if (stepId === 1 || stepId === 2) {
+      setTranscriptExpanded(true);
+    }
+    requestAnimationFrame(() => {
+      document.getElementById(targetId)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }
+
+  useEffect(() => {
+    if (reviewFocusToken === 0) {
+      return;
+    }
+    document.getElementById("review-section")?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
-  }
+  }, [reviewFocusToken]);
 
   function handleReviewChange(next: HydratedMeetingAnalysis) {
     setReview(next);
@@ -121,6 +138,8 @@ export function MeetingWorkflow() {
     setStaleDismissed(false);
     setDirtyBaseline(applied.dirtyBaseline);
     setTransferComplete(false);
+    setTranscriptExpanded(false);
+    setReviewFocusToken((token) => token + 1);
   }
 
   async function handleAnalyzeRequest(transcript: string) {
@@ -163,12 +182,20 @@ export function MeetingWorkflow() {
       />
 
       <main className="mx-auto w-full max-w-5xl flex-1 space-y-8 px-4 py-8 sm:px-6 sm:py-10">
-        <section id="transcript-section" aria-labelledby="transcript-section-title">
+        <section
+          id="transcript-section"
+          className="scroll-mt-36"
+          aria-labelledby="transcript-section-title"
+        >
           <WorkflowStageCard
             step={1}
             title="Vnos transkripta"
             description="Prilepite transkript, naložite datoteko ali uporabite primer. Po uspešnem branju datoteke kliknite Analiziraj z AI."
             titleId="transcript-section-title"
+            collapsible={analysisComplete}
+            expanded={transcriptExpanded}
+            onExpandedChange={setTranscriptExpanded}
+            contentId="transcript-section-content"
           >
             {analysisComplete ? (
               <Alert className="mb-5 border-primary/25 bg-primary/5">
@@ -187,7 +214,11 @@ export function MeetingWorkflow() {
 
         {analysisComplete && review ? (
           <>
-            <section id="review-section" aria-labelledby="review-section-title">
+            <section
+              id="review-section"
+              className="scroll-mt-36"
+              aria-labelledby="review-section-title"
+            >
               <WorkflowStageCard
                 step={3}
                 title="Pregled in potrditev"
@@ -200,6 +231,7 @@ export function MeetingWorkflow() {
 
             <section
               id="transfer-section"
+              className="scroll-mt-36"
               aria-labelledby="transfer-section-title"
             >
               <WorkflowStageCard
@@ -218,6 +250,7 @@ export function MeetingWorkflow() {
 
             <section
               id="follow-up-section"
+              className="scroll-mt-36"
               aria-labelledby="follow-up-section-title"
             >
               <WorkflowStageCard
