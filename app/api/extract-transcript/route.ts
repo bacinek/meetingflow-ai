@@ -1,6 +1,6 @@
 import mammoth from "mammoth";
-import { PDFParse } from "pdf-parse";
 
+import { extractPdfText } from "@/lib/extract-pdf-text";
 import {
   getFileExtension,
   isAllowedUploadExtension,
@@ -24,13 +24,7 @@ async function extractTextFromBuffer(
   }
 
   if (extension === ".pdf") {
-    const parser = new PDFParse({ data: buffer });
-    try {
-      const result = await parser.getText();
-      return result.text;
-    } finally {
-      await parser.destroy();
-    }
+    return extractPdfText(buffer);
   }
 
   throw new Error("unsupported");
